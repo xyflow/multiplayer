@@ -1,15 +1,15 @@
 // schema.ts
 import { co, Group, z } from "jazz-tools";
 
+const Position = z.object({
+  x: z.number(),
+  y: z.number(),
+});
+
 export const JazzNode = co.map({
   type: z.string(),
-  position: z.object({
-    x: z.number(),
-    y: z.number(),
-  }),
-  data: z.object({
-    label: z.string(),
-  }),
+  position: Position,
+  data: z.object({}),
 });
 
 export type JazzNodeType = co.loaded<typeof JazzNode>;
@@ -24,10 +24,17 @@ export const JazzEdge = co.map({
 
 export type JazzEdgeType = co.loaded<typeof JazzEdge>;
 
+export const JazzCursor = co.map({
+  // id: z.string(),
+  position: Position,
+  isDragging: z.boolean(),
+});
+
 export const JazzFlow = co.map({
   name: z.string(),
   nodes: co.list(JazzNode),
   edges: co.list(JazzEdge),
+  cursors: co.feed(JazzCursor),
 });
 
 export type DeeplyLoadedJazzFlow = co.loaded<
@@ -35,11 +42,12 @@ export type DeeplyLoadedJazzFlow = co.loaded<
   {
     nodes: { $each: true };
     edges: { $each: true };
+    cursors: true;
   }
 >;
 
 export const JazzRoot = co.map({
-  lastOpenedFlow: z.optional(JazzFlow),
+  activeFlow: z.optional(JazzFlow),
 });
 
 export const Profile = co.profile({
@@ -55,7 +63,6 @@ export const Account = co
     if (account.root === undefined) {
       account.root = JazzRoot.create({});
     }
-
     if (account.profile === undefined) {
       const group = Group.create();
       group.makePublic();

@@ -1,86 +1,37 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { co, Group } from "jazz-tools";
-import { useAccount, useCoState } from "jazz-tools/react";
-import { useEffect, useState } from "react";
-import { JazzEdge, JazzFlow, JazzNode, JazzRoot } from "./state/schema";
+import { useCallback, useEffect, useState } from "react";
+import { useCollaboration } from "./state/jazz/hooks";
 import FlowApp from "./FlowApp";
 
 export default function App() {
-  const { me } = useAccount();
-
+  const { state, actions } = useCollaboration();
   const [flowCode, setFlowCode] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const root = useCoState(JazzRoot, me?.root?.id, {
-    resolve: {
-      lastOpenedFlow: {
-        nodes: { $each: true },
-        edges: { $each: true },
-      },
+  const handleJoinFlow = useCallback(
+    async function handleJoinFlow() {
+      if (!flowCode) return;
+
+      const success = await actions.joinFlow(flowCode);
+      if (success) {
+        setFlowCode("");
+      }
     },
-  });
-
-  function createFlow() {
-    if (!root) return;
-
-    const publicGroup = Group.create();
-    publicGroup.addMember("everyone", "writer");
-
-    root.lastOpenedFlow = JazzFlow.create(
-      {
-        name: "New Flow",
-        nodes: co.list(JazzNode).create([], publicGroup),
-        edges: co.list(JazzEdge).create([], publicGroup),
-      },
-      publicGroup
-    );
-  }
-
-  async function joinFlow() {
-    if (!flowCode || !root) return;
-
-    setIsLoading(true);
-    setError(null); // Clear any previous errors
-
-    try {
-      const flow = await JazzFlow.load(flowCode, {
-        resolve: {
-          nodes: { $each: true },
-          edges: { $each: true },
-        },
-      });
-
-      if (!flow) {
-        setError("Invalid flow code");
-        setFlowCode("");
-        return;
-      }
-
-      if (flow) {
-        root.lastOpenedFlow = flow;
-        setFlowCode("");
-        setError(null);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  function exitFlow() {
-    if (!root) return;
-    root.lastOpenedFlow = undefined;
-  }
+    [flowCode, actions.joinFlow]
+  );
 
   useEffect(() => {
-    if (flowCode.length === 30 && !isLoading && !error) {
-      joinFlow();
+    if (flowCode.length === 30 && !state.isLoading && !state.error) {
+      handleJoinFlow();
     }
-  });
+  }, [flowCode, state.isLoading, state.error, handleJoinFlow]);
 
-  if (root?.lastOpenedFlow) {
-    return <FlowApp flow={root.lastOpenedFlow} exitFlow={exitFlow} />;
+  if (!state.userId) {
+    return null;
+  }
+
+  if (state.currentFlow) {
+    return <FlowApp flow={state.currentFlow} actions={actions} />;
   }
 
   return (
@@ -89,8 +40,8 @@ export default function App() {
         <Button
           size="lg"
           className="w-full"
-          onClick={createFlow}
-          disabled={isLoading}
+          onClick={actions.createFlow}
+          disabled={state.isLoading}
         >
           Create new flow
         </Button>
@@ -99,22 +50,25 @@ export default function App() {
 
         <div className="w-full space-y-2">
           <Input
-            placeholder={isLoading ? "Loading..." : "Join an existing flow"}
+            placeholder={
+              state.isLoading ? "Loading..." : "Join an existing flow"
+            }
             className="w-full"
             value={flowCode}
             onChange={(e) => {
               setFlowCode(e.target.value.trim());
-              if (error) setError(null); // Clear error when user starts typing
             }}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !isLoading) {
-                joinFlow();
+              if (e.key === "Enter" && !state.isLoading) {
+                handleJoinFlow();
               }
             }}
-            aria-invalid={!!error}
-            disabled={isLoading}
+            aria-invalid={!!state.error}
+            disabled={state.isLoading}
           />
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {state.error && (
+            <p className="text-sm text-destructive">{state.error}</p>
+          )}
         </div>
       </div>
     </div>
