@@ -25,16 +25,26 @@ export const JazzEdge = co.map({
 export type JazzEdgeType = co.loaded<typeof JazzEdge>;
 
 export const JazzCursor = co.map({
-  // id: z.string(),
   position: Position,
   isDragging: z.boolean(),
 });
+
+export const JazzCursorContainer = co.map({
+  feed: co.feed(JazzCursor),
+});
+
+export type DeeplyLoadedCursorContainer = co.loaded<
+  typeof JazzCursorContainer,
+  {
+    feed: { $each: true };
+  }
+>;
 
 export const JazzFlow = co.map({
   name: z.string(),
   nodes: co.list(JazzNode),
   edges: co.list(JazzEdge),
-  cursors: co.feed(JazzCursor),
+  cursors: JazzCursorContainer,
 });
 
 export type DeeplyLoadedJazzFlow = co.loaded<

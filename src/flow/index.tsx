@@ -11,6 +11,7 @@ import {
 import { Share2, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Cursors } from "./cursors";
 
 export function Flow({
   flow,
@@ -38,12 +39,6 @@ export function Flow({
       onConnect={actions.onConnect}
       fitView={fitView}
       minZoom={0}
-      // onMouseMove={(e) => {
-      //   actions.updateCursor({
-      //     position: screenToFlowPosition({ x: e.clientX, y: e.clientY }),
-      //     isDragging: false,
-      //   });
-      // }}
     >
       <Panel className="flex gap-2" position="top-left">
         <Button
@@ -78,17 +73,7 @@ export function Flow({
       <MiniMap />
       <Controls />
       <Background />
-      {/* <ViewportPortal>
-        {cursors.map((cursor) => (
-          <div
-            key={cursor.user}
-            className="absolute w-2 h-2 bg-red-500 rounded-full"
-            style={{
-              transform: `translate(${cursor.position?.x}px, ${cursor.position?.y}px)`,
-            }}
-          />
-        ))}
-      </ViewportPortal> */}
+      <Cursors />
     </ReactFlow>
   );
 }

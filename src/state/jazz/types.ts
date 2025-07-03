@@ -6,6 +6,7 @@ import type {
   OnEdgesChange,
   OnConnect,
 } from "@xyflow/react";
+import type { DeeplyLoadedJazzFlow } from "./schema";
 
 export interface Cursor {
   user: string;
@@ -18,7 +19,6 @@ export interface FlowState {
   name: string;
   nodes: Node[];
   edges: Edge[];
-  // cursors: Cursor[];
 }
 
 export interface FlowActions {
@@ -40,7 +40,6 @@ export interface FlowActions {
     sourceHandle?: string;
     targetHandle?: string;
   }) => void;
-  updateCursor: (cursor: { position: XYPosition; isDragging: boolean }) => void;
 }
 
 export interface CollaborationState {
@@ -51,6 +50,7 @@ export interface CollaborationState {
 }
 
 export interface CollaborationProvider {
+  rawState: DeeplyLoadedJazzFlow;
   state: CollaborationState;
   actions: FlowActions;
 }

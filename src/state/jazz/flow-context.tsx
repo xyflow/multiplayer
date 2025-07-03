@@ -1,4 +1,10 @@
-import { type ReactNode, useState, useMemo, useCallback } from "react";
+import {
+  type ReactNode,
+  useState,
+  useMemo,
+  useCallback,
+  useContext,
+} from "react";
 import { JazzReactProvider, useAccount, useCoState } from "jazz-tools/react";
 import { Group, co } from "jazz-tools";
 import type {
@@ -14,10 +20,12 @@ import {
   JazzEdge,
   JazzFlow,
   JazzRoot,
-  JazzCursor,
   Account,
   type JazzNodeType,
   type JazzEdgeType,
+  JazzCursorContainer,
+  JazzCursor,
+  type DeeplyLoadedJazzFlow,
 } from "./schema";
 import type {
   CollaborationState,
@@ -25,12 +33,16 @@ import type {
   CollaborationProvider,
   FlowState,
 } from "./types";
-import { CollaborationContext } from "./context";
+
+import { createContext } from "react";
+
+export const CollaborationContext = createContext<CollaborationProvider | null>(
+  null
+);
 
 const resolveFlow = {
   nodes: { $each: true },
   edges: { $each: true },
-  // cursors: true,
 };
 
 function JazzCollaborationProvider({ children }: { children: ReactNode }) {
@@ -88,19 +100,8 @@ function JazzCollaborationProvider({ children }: { children: ReactNode }) {
       name: jazzFlow.name,
       nodes,
       edges,
-      // cursors: Object.values(jazzFlow.cursors.perAccount)
-      //   .reduce((acc, entry) => {
-      //     if (!entry.value || !entry.by) return acc;
-      //     acc.push({
-      //       user: entry.by._owner.id,
-      //       position: entry.value.position,
-      //       isDragging: entry.value.isDragging,
-      //     });
-      //     return acc;
-      //   }, [] as Cursor[])
-      //   .filter((cursor) => cursor.user !== me?._owner.id),
     };
-  }, [root?.activeFlow, me?._owner.id, nodeCache, edgeCache]);
+  }, [root?.activeFlow, nodeCache, edgeCache]);
 
   // ReactFlow change handlers with proper caching
   const onNodesChange: OnNodesChange = useCallback(
@@ -264,7 +265,12 @@ function JazzCollaborationProvider({ children }: { children: ReactNode }) {
             name: "New Flow",
             nodes: co.list(JazzNode).create([], publicGroup),
             edges: co.list(JazzEdge).create([], publicGroup),
-            cursors: co.feed(JazzCursor).create([], publicGroup),
+            cursors: JazzCursorContainer.create(
+              {
+                feed: co.feed(JazzCursor).create([], publicGroup),
+              },
+              publicGroup
+            ),
           },
           publicGroup
         );
@@ -306,21 +312,6 @@ function JazzCollaborationProvider({ children }: { children: ReactNode }) {
       onConnect,
       addNode,
       addEdge,
-
-      updateCursor: (cursor: { position: XYPosition; isDragging: boolean }) => {
-        if (!root?.activeFlow) return;
-
-        const group = root.activeFlow._owner.castAs(Group);
-        root.activeFlow.cursors?.push(
-          JazzCursor.create(
-            {
-              position: { ...cursor.position },
-              isDragging: cursor.isDragging,
-            },
-            group
-          )
-        );
-      },
     }),
     [root, onNodesChange, onEdgesChange, onConnect, addNode, addEdge]
   );
@@ -334,6 +325,7 @@ function JazzCollaborationProvider({ children }: { children: ReactNode }) {
 
   const collaborationProvider: CollaborationProvider = {
     state,
+    rawState: root?.activeFlow as DeeplyLoadedJazzFlow,
     actions,
   };
 
@@ -356,4 +348,14 @@ export function CollaborationProvider({ children }: { children: ReactNode }) {
       <JazzCollaborationProvider>{children}</JazzCollaborationProvider>
     </JazzReactProvider>
   );
+}
+
+export function useCollaboration(): CollaborationProvider {
+  const context = useContext(CollaborationContext);
+  if (!context) {
+    throw new Error(
+      "useCollaboration must be used within a CollaborationProvider"
+    );
+  }
+  return context;
 }

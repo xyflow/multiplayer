@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCallback, useEffect, useState } from "react";
-import { useCollaboration } from "./state/jazz/hooks";
+import { useCollaboration } from "./state/jazz/flow-context";
 import FlowApp from "./FlowApp";
 
 export default function App() {
@@ -17,7 +17,7 @@ export default function App() {
         setFlowCode("");
       }
     },
-    [flowCode, actions.joinFlow]
+    [flowCode, actions]
   );
 
   useEffect(() => {
