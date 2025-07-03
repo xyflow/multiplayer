@@ -1,37 +1,44 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCallback, useEffect, useState } from "react";
-import { useCollaboration } from "./state/jazz/flow-context";
+import { useApp } from "./state/jazz/app-context";
+import { useFlow } from "./state/jazz/flow-context";
 import FlowApp from "./FlowApp";
+import { ReactFlowProvider } from "@xyflow/react";
 
 export default function App() {
-  const { state, actions } = useCollaboration();
+  const { state: appState, actions: appActions } = useApp();
+  const { state: flowState, actions: flowActions } = useFlow();
   const [flowCode, setFlowCode] = useState("");
 
   const handleJoinFlow = useCallback(
     async function handleJoinFlow() {
       if (!flowCode) return;
 
-      const success = await actions.joinFlow(flowCode);
+      const success = await appActions.joinFlow(flowCode);
       if (success) {
         setFlowCode("");
       }
     },
-    [flowCode, actions]
+    [flowCode, appActions]
   );
 
   useEffect(() => {
-    if (flowCode.length === 30 && !state.isLoading && !state.error) {
+    if (flowCode.length === 30 && !appState.isLoading && !appState.error) {
       handleJoinFlow();
     }
-  }, [flowCode, state.isLoading, state.error, handleJoinFlow]);
+  }, [flowCode, appState.isLoading, appState.error, handleJoinFlow]);
 
-  if (!state.userId) {
+  if (!appState.userId) {
     return null;
   }
 
-  if (state.currentFlow) {
-    return <FlowApp flow={state.currentFlow} actions={actions} />;
+  if (flowState) {
+    return (
+      <ReactFlowProvider>
+        <FlowApp flow={flowState} actions={flowActions} />
+      </ReactFlowProvider>
+    );
   }
 
   return (
@@ -40,8 +47,8 @@ export default function App() {
         <Button
           size="lg"
           className="w-full"
-          onClick={actions.createFlow}
-          disabled={state.isLoading}
+          onClick={appActions.createFlow}
+          disabled={appState.isLoading}
         >
           Create new flow
         </Button>
@@ -51,7 +58,7 @@ export default function App() {
         <div className="w-full space-y-2">
           <Input
             placeholder={
-              state.isLoading ? "Loading..." : "Join an existing flow"
+              appState.isLoading ? "Loading..." : "Join an existing flow"
             }
             className="w-full"
             value={flowCode}
@@ -59,15 +66,15 @@ export default function App() {
               setFlowCode(e.target.value.trim());
             }}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !state.isLoading) {
+              if (e.key === "Enter" && !appState.isLoading) {
                 handleJoinFlow();
               }
             }}
-            aria-invalid={!!state.error}
-            disabled={state.isLoading}
+            aria-invalid={!!appState.error}
+            disabled={appState.isLoading}
           />
-          {state.error && (
-            <p className="text-sm text-destructive">{state.error}</p>
+          {appState.error && (
+            <p className="text-sm text-destructive">{appState.error}</p>
           )}
         </div>
       </div>

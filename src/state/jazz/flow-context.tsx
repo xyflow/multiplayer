@@ -4,9 +4,10 @@ import {
   useMemo,
   useCallback,
   useContext,
+  createContext,
 } from "react";
-import { JazzReactProvider, useAccount, useCoState } from "jazz-tools/react";
-import { Group, co } from "jazz-tools";
+import { useCoState } from "jazz-tools/react";
+import { Group } from "jazz-tools";
 import type {
   Node,
   Edge,
@@ -19,37 +20,21 @@ import {
   JazzNode,
   JazzEdge,
   JazzFlow,
-  JazzRoot,
-  Account,
   type JazzNodeType,
   type JazzEdgeType,
-  JazzCursorContainer,
-  JazzCursor,
-  type DeeplyLoadedJazzFlow,
 } from "./schema";
-import type {
-  CollaborationState,
-  FlowActions,
-  CollaborationProvider,
-  FlowState,
-} from "./types";
+import type { FlowState, FlowActions, FlowProvider } from "./types";
+import { useApp } from "./app-context";
 
-import { createContext } from "react";
-
-export const CollaborationContext = createContext<CollaborationProvider | null>(
-  null
-);
+export const FlowContext = createContext<FlowProvider | null>(null);
 
 const resolveFlow = {
   nodes: { $each: true },
   edges: { $each: true },
 };
 
-function JazzCollaborationProvider({ children }: { children: ReactNode }) {
-  const { me } = useAccount();
-
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+function FlowContextProvider({ children }: { children: ReactNode }) {
+  const { state: appState } = useApp();
 
   // Caching for performance
   const [nodeCache, setNodeCache] = useState<
@@ -60,14 +45,15 @@ function JazzCollaborationProvider({ children }: { children: ReactNode }) {
     Map<string, { jazzEdge: JazzEdgeType; edge: Edge }>
   >(new Map());
 
-  const root = useCoState(JazzRoot, me?.root?.id, {
-    resolve: { activeFlow: resolveFlow },
+  // Load the deeply loaded flow based on activeFlowId from AppContext
+  const rawState = useCoState(JazzFlow, appState.activeFlowId || undefined, {
+    resolve: resolveFlow,
   });
 
   const currentFlow: FlowState | null = useMemo(() => {
-    if (!root?.activeFlow) return null;
+    if (!rawState) return null;
 
-    const jazzFlow = root.activeFlow;
+    const jazzFlow = rawState;
 
     // Convert Jazz nodes to React Flow nodes with caching
     const nodes = jazzFlow.nodes.map((jazzNode) => {
@@ -101,12 +87,12 @@ function JazzCollaborationProvider({ children }: { children: ReactNode }) {
       nodes,
       edges,
     };
-  }, [root?.activeFlow, nodeCache, edgeCache]);
+  }, [rawState, nodeCache, edgeCache]);
 
   // ReactFlow change handlers with proper caching
   const onNodesChange: OnNodesChange = useCallback(
     (changes) => {
-      if (!root?.activeFlow) return;
+      if (!rawState) return;
 
       changes.forEach((change) => {
         switch (change.type) {
@@ -134,12 +120,12 @@ function JazzCollaborationProvider({ children }: { children: ReactNode }) {
 
           case "remove": {
             nodeCache.delete(change.id);
-            if (root.activeFlow) {
-              const index = root.activeFlow.nodes.findIndex(
+            if (rawState) {
+              const index = rawState.nodes.findIndex(
                 (node) => node.id === change.id
               );
               if (index !== -1) {
-                root.activeFlow.nodes.splice(index, 1);
+                rawState.nodes.splice(index, 1);
               }
             }
             break;
@@ -148,12 +134,12 @@ function JazzCollaborationProvider({ children }: { children: ReactNode }) {
       });
       setNodeCache(new Map(nodeCache)); // Trigger React re-render
     },
-    [nodeCache, root?.activeFlow]
+    [nodeCache, rawState]
   );
 
   const onEdgesChange: OnEdgesChange = useCallback(
     (changes) => {
-      if (!root?.activeFlow) return;
+      if (!rawState) return;
 
       changes.forEach((change) => {
         switch (change.type) {
@@ -166,12 +152,12 @@ function JazzCollaborationProvider({ children }: { children: ReactNode }) {
 
           case "remove": {
             edgeCache.delete(change.id);
-            if (root.activeFlow) {
-              const index = root.activeFlow.edges.findIndex(
+            if (rawState) {
+              const index = rawState.edges.findIndex(
                 (edge) => edge.id === change.id
               );
               if (index !== -1) {
-                root.activeFlow.edges.splice(index, 1);
+                rawState.edges.splice(index, 1);
               }
             }
             break;
@@ -180,14 +166,14 @@ function JazzCollaborationProvider({ children }: { children: ReactNode }) {
       });
       setEdgeCache(new Map(edgeCache)); // Trigger React re-render
     },
-    [edgeCache, root?.activeFlow]
+    [edgeCache, rawState]
   );
 
   const onConnect: OnConnect = useCallback(
     (connection) => {
-      if (!connection.source || !connection.target || !root?.activeFlow) return;
+      if (!connection.source || !connection.target || !rawState) return;
 
-      const group = root.activeFlow._owner.castAs(Group);
+      const group = rawState._owner.castAs(Group);
       const newEdge = JazzEdge.create(
         {
           type: "default",
@@ -199,9 +185,9 @@ function JazzCollaborationProvider({ children }: { children: ReactNode }) {
         group
       );
 
-      root.activeFlow.edges.push(newEdge);
+      rawState.edges.push(newEdge);
     },
-    [root?.activeFlow]
+    [rawState]
   );
 
   const addNode = useCallback(
@@ -210,9 +196,9 @@ function JazzCollaborationProvider({ children }: { children: ReactNode }) {
       position: XYPosition;
       data?: Node["data"];
     }) => {
-      if (!root?.activeFlow) return;
+      if (!rawState) return;
 
-      const group = root.activeFlow._owner.castAs(Group);
+      const group = rawState._owner.castAs(Group);
       const newNode = JazzNode.create(
         {
           type: nodeData.type || "default",
@@ -221,9 +207,9 @@ function JazzCollaborationProvider({ children }: { children: ReactNode }) {
         },
         group
       );
-      root.activeFlow.nodes.push(newNode);
+      rawState.nodes.push(newNode);
     },
-    [root?.activeFlow]
+    [rawState]
   );
 
   const addEdge = useCallback(
@@ -234,9 +220,9 @@ function JazzCollaborationProvider({ children }: { children: ReactNode }) {
       sourceHandle?: string;
       targetHandle?: string;
     }) => {
-      if (!root?.activeFlow) return;
+      if (!rawState) return;
 
-      const group = root.activeFlow._owner.castAs(Group);
+      const group = rawState._owner.castAs(Group);
       const newEdge = JazzEdge.create(
         {
           type: edgeData.type || "default",
@@ -247,115 +233,60 @@ function JazzCollaborationProvider({ children }: { children: ReactNode }) {
         },
         group
       );
-      root.activeFlow.edges.push(newEdge);
+      rawState.edges.push(newEdge);
     },
-    [root?.activeFlow]
+    [rawState]
+  );
+
+  const updateNodeData = useCallback(
+    (nodeId: string, newData: Node["data"]) => {
+      if (!rawState) return;
+
+      const jazzNode = rawState.nodes.find((node) => node.id === nodeId);
+      if (jazzNode) {
+        jazzNode.data = { ...jazzNode.data, ...newData };
+
+        // Update the cache to trigger re-render
+        const cached = nodeCache.get(nodeId);
+        if (cached) {
+          cached.node = { ...cached.node, data: jazzNode.data };
+          setNodeCache(new Map(nodeCache));
+        }
+      }
+    },
+    [rawState, nodeCache]
   );
 
   const actions: FlowActions = useMemo(
     () => ({
-      createFlow: async () => {
-        if (!root) return;
-
-        const publicGroup = Group.create();
-        publicGroup.addMember("everyone", "writer");
-
-        root.activeFlow = JazzFlow.create(
-          {
-            name: "New Flow",
-            nodes: co.list(JazzNode).create([], publicGroup),
-            edges: co.list(JazzEdge).create([], publicGroup),
-            cursors: JazzCursorContainer.create(
-              {
-                feed: co.feed(JazzCursor).create([], publicGroup),
-              },
-              publicGroup
-            ),
-          },
-          publicGroup
-        );
-      },
-
-      joinFlow: async (flowCode: string): Promise<boolean> => {
-        if (!flowCode || !root) return false;
-
-        setIsLoading(true);
-        setError(null);
-
-        try {
-          const flow = await JazzFlow.load(flowCode, { resolve: resolveFlow });
-
-          if (!flow) {
-            setError("Invalid flow code");
-            return false;
-          }
-
-          root.activeFlow = flow;
-          setError(null);
-          return true;
-        } catch (error) {
-          setError("Failed to join flow");
-          console.error(error);
-          return false;
-        } finally {
-          setIsLoading(false);
-        }
-      },
-
-      exitFlow: () => {
-        if (!root) return;
-        root.activeFlow = undefined;
-      },
-
       onNodesChange,
       onEdgesChange,
       onConnect,
       addNode,
       addEdge,
+      updateNodeData,
     }),
-    [root, onNodesChange, onEdgesChange, onConnect, addNode, addEdge]
+    [onNodesChange, onEdgesChange, onConnect, addNode, addEdge, updateNodeData]
   );
 
-  const state: CollaborationState = {
-    currentFlow,
-    userId: me?._owner.id || null,
-    isLoading,
-    error,
-  };
-
-  const collaborationProvider: CollaborationProvider = {
-    state,
-    rawState: root?.activeFlow as DeeplyLoadedJazzFlow,
+  const flowProvider: FlowProvider = {
+    state: currentFlow,
     actions,
   };
 
   return (
-    <CollaborationContext.Provider value={collaborationProvider}>
-      {children}
-    </CollaborationContext.Provider>
+    <FlowContext.Provider value={flowProvider}>{children}</FlowContext.Provider>
   );
 }
 
-export function CollaborationProvider({ children }: { children: ReactNode }) {
-  return (
-    <JazzReactProvider
-      AccountSchema={Account}
-      sync={{
-        peer: "wss://cloud.jazz.tools/?key=peter@xyflow.com",
-        when: "always",
-      }}
-    >
-      <JazzCollaborationProvider>{children}</JazzCollaborationProvider>
-    </JazzReactProvider>
-  );
+export function FlowProvider({ children }: { children: ReactNode }) {
+  return <FlowContextProvider>{children}</FlowContextProvider>;
 }
 
-export function useCollaboration(): CollaborationProvider {
-  const context = useContext(CollaborationContext);
+export function useFlow(): FlowProvider {
+  const context = useContext(FlowContext);
   if (!context) {
-    throw new Error(
-      "useCollaboration must be used within a CollaborationProvider"
-    );
+    throw new Error("useFlow must be used within a FlowProvider");
   }
   return context;
 }

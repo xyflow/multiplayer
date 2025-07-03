@@ -2,21 +2,27 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { Toaster } from "@/components/ui/sonner";
-import { CollaborationProvider } from "./state/jazz/flow-context.tsx";
+import { AppProvider } from "./state/jazz/app-context";
+import { FlowProvider } from "./state/jazz/flow-context";
 
 import "@xyflow/react/dist/style.css";
 import "./index.css";
 
 import App from "./App.tsx";
 import { CursorsProvider } from "./state/jazz/cursors-context.tsx";
+import { ConnectionsProvider } from "./state/jazz/connections-context.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <CollaborationProvider>
-      <CursorsProvider>
-        <App />
-      </CursorsProvider>
-    </CollaborationProvider>
+    <AppProvider>
+      <FlowProvider>
+        <CursorsProvider>
+          <ConnectionsProvider>
+            <App />
+          </ConnectionsProvider>
+        </CursorsProvider>
+      </FlowProvider>
+    </AppProvider>
     <Toaster />
   </StrictMode>
 );

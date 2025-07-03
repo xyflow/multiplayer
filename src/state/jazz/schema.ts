@@ -40,11 +40,35 @@ export type DeeplyLoadedCursorContainer = co.loaded<
   }
 >;
 
+const HandleType = z.enum(["source", "target"]);
+
+export const JazzConnection = co.map({
+  source: z.string(),
+  sourceType: HandleType,
+  sourceHandle: z.optional(z.string()),
+  target: z.optional(z.string()),
+  targetType: z.optional(HandleType),
+  targetHandle: z.optional(z.string()),
+  position: Position,
+});
+
+export const JazzConnectionContainer = co.map({
+  feed: co.feed(z.optional(JazzConnection)),
+});
+
+export type DeeplyLoadedConnectionContainer = co.loaded<
+  typeof JazzConnectionContainer,
+  {
+    feed: { $each: true };
+  }
+>;
+
 export const JazzFlow = co.map({
   name: z.string(),
   nodes: co.list(JazzNode),
   edges: co.list(JazzEdge),
   cursors: JazzCursorContainer,
+  connections: JazzConnectionContainer,
 });
 
 export type DeeplyLoadedJazzFlow = co.loaded<
@@ -53,6 +77,7 @@ export type DeeplyLoadedJazzFlow = co.loaded<
     nodes: { $each: true };
     edges: { $each: true };
     cursors: true;
+    connections: true;
   }
 >;
 

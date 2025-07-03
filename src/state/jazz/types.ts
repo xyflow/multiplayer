@@ -6,13 +6,40 @@ import type {
   OnEdgesChange,
   OnConnect,
 } from "@xyflow/react";
-import type { DeeplyLoadedJazzFlow } from "./schema";
 
 export interface Cursor {
   user: string;
   position: XYPosition;
   dragging: boolean;
   color: string;
+}
+
+export interface Connection {
+  source: string;
+  sourceType: "source" | "target";
+  sourceHandle?: string;
+  target?: string;
+  targetType?: "source" | "target";
+  targetHandle?: string;
+  position: XYPosition;
+}
+
+export interface AppState {
+  activeFlowId: string | null;
+  userId: string | null;
+  isLoading: boolean;
+  error: string | null;
+}
+
+export interface AppActions {
+  createFlow: () => Promise<void>;
+  joinFlow: (flowCode: string) => Promise<boolean>;
+  exitFlow: () => void;
+  getUserColor: (userId: string) => string;
+}
+export interface AppProvider {
+  state: AppState;
+  actions: AppActions;
 }
 
 export interface FlowState {
@@ -23,9 +50,6 @@ export interface FlowState {
 }
 
 export interface FlowActions {
-  createFlow: () => Promise<void>;
-  joinFlow: (flowCode: string) => Promise<boolean>;
-  exitFlow: () => void;
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
@@ -41,17 +65,10 @@ export interface FlowActions {
     sourceHandle?: string;
     targetHandle?: string;
   }) => void;
+  updateNodeData: (nodeId: string, newData: Node["data"]) => void;
 }
 
-export interface CollaborationState {
-  currentFlow: FlowState | null;
-  userId: string | null;
-  isLoading: boolean;
-  error: string | null;
-}
-
-export interface CollaborationProvider {
-  rawState: DeeplyLoadedJazzFlow;
-  state: CollaborationState;
+export interface FlowProvider {
+  state: FlowState | null;
   actions: FlowActions;
 }

@@ -1,42 +1,68 @@
 import { Button } from "@/components/ui/button";
 import type { FlowActions, FlowState } from "@/state/jazz/types";
-import {
-  ReactFlow,
-  MiniMap,
-  Controls,
-  Background,
-  useReactFlow,
-  Panel,
-} from "@xyflow/react";
+import { useApp } from "@/state/jazz/app-context";
+
+import { ReactFlow, MiniMap, Controls, Background, Panel } from "@xyflow/react";
 import { Share2, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Cursors } from "./cursors";
+import { CheckboxNode } from "./nodes/CheckboxNode";
+import { TextNode } from "./nodes/TextNode";
+import { Connections } from "./connections";
+import { ContextMenu } from "./ContextMenu";
+
+// Register custom node types
+const nodeTypes = {
+  checkbox: CheckboxNode,
+  text: TextNode,
+};
 
 export function Flow({
   flow,
-  actions,
+  actions: flowActions,
 }: {
   flow: FlowState;
   actions: FlowActions;
 }) {
-  const { screenToFlowPosition } = useReactFlow();
+  const { actions: appActions } = useApp();
 
   const [fitView] = useState(flow.nodes.length > 0);
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    visible: boolean;
+  }>({ x: 0, y: 0, visible: false });
+
+  const hideContextMenu = () => {
+    setContextMenu({ x: 0, y: 0, visible: false });
+  };
 
   return (
     <ReactFlow
       nodes={flow.nodes}
       edges={flow.edges}
-      onContextMenu={(e) => {
-        e.preventDefault();
-        actions.addNode({
-          position: screenToFlowPosition({ x: e.clientX, y: e.clientY }),
-        });
+      nodeTypes={nodeTypes}
+      onPointerDown={(e) => {
+        // Right mouse button is button 2
+        if (e.button === 2) {
+          e.preventDefault();
+          setContextMenu({
+            x: e.clientX - 150,
+            y: e.clientY - 50,
+            visible: true,
+          });
+        } else {
+          // Hide context menu on any other click
+          hideContextMenu();
+        }
       }}
-      onNodesChange={actions.onNodesChange}
-      onEdgesChange={actions.onEdgesChange}
-      onConnect={actions.onConnect}
+      onContextMenu={(e) => {
+        e.preventDefault(); // Prevent default context menu
+      }}
+      onNodesChange={flowActions.onNodesChange}
+      onEdgesChange={flowActions.onEdgesChange}
+      onConnect={flowActions.onConnect}
       fitView={fitView}
       minZoom={0}
     >
@@ -44,7 +70,7 @@ export function Flow({
         <Button
           variant="outline"
           className="bg-red-50 hover:bg-red-100 border-red-200 text-red-700"
-          onClick={actions.exitFlow}
+          onClick={appActions.exitFlow}
         >
           <X className="h-4 w-4" />
           Exit
@@ -70,10 +96,20 @@ export function Flow({
           Share
         </Button>
       </Panel>
+
+      <ContextMenu
+        visible={contextMenu.visible}
+        x={contextMenu.x}
+        y={contextMenu.y}
+        flowActions={flowActions}
+        onHide={hideContextMenu}
+      />
+
       <MiniMap />
       <Controls />
       <Background />
       <Cursors />
+      <Connections />
     </ReactFlow>
   );
 }

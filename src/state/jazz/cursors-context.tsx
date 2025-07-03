@@ -4,18 +4,17 @@ import {
   type ReactNode,
   useMemo,
   useCallback,
-  useRef,
 } from "react";
 import { useAccount, useCoState } from "jazz-tools/react";
 import { Group } from "jazz-tools";
 import type { XYPosition } from "@xyflow/react";
 import {
   JazzCursor,
-  JazzCursorContainer,
+  JazzFlow,
   type DeeplyLoadedCursorContainer,
 } from "./schema";
 import type { Cursor } from "./types";
-import { useCollaboration } from "./flow-context";
+import { useApp } from "./app-context";
 
 export interface CursorsState {
   cursors: Cursor[];
@@ -34,28 +33,17 @@ export interface CursorsProvider {
 
 export const CursorsContext = createContext<CursorsProvider | null>(null);
 
-const allColors = [
-  "#D14D41",
-  "#DA702C",
-  "#D0A215",
-  "#879A39",
-  "#3AA99F",
-  "#4385BE",
-  "#8B7EC8",
-  "#CE5D97",
-];
-
 function JazzCursorsProvider({ children }: { children: ReactNode }) {
-  const { rawState } = useCollaboration();
-  //   console.log(rawState);
+  const { state: appState, actions: appActions } = useApp();
   const { me } = useAccount();
 
-  const colorMap = useRef(new Map<string, string>());
+  // Load the flow to get cursors container
+  const flow = useCoState(JazzFlow, appState.activeFlowId || undefined, {
+    resolve: { cursors: { feed: { $each: true } } },
+  });
 
   const cursorContainer: DeeplyLoadedCursorContainer | null | undefined =
-    useCoState(JazzCursorContainer, rawState?.cursors?.id, {
-      resolve: { feed: { $each: true } },
-    });
+    flow?.cursors;
 
   const cursors: Cursor[] = useMemo(() => {
     if (!cursorContainer || !cursorContainer.feed) return [];
@@ -74,24 +62,17 @@ function JazzCursorsProvider({ children }: { children: ReactNode }) {
           return acc;
         }
 
-        if (!colorMap.current.has(entry.by.id)) {
-          colorMap.current.set(
-            entry.by.id,
-            allColors[Math.floor(Math.random() * allColors.length)]
-          );
-        }
-
         acc.push({
           user: entry.by.id,
           position: entry.value.position,
           dragging: entry.value.dragging,
-          color: colorMap.current.get(entry.by.id)!,
+          color: appActions.getUserColor(entry.by.id),
         });
         return acc;
       },
       [] as Cursor[]
     );
-  }, [cursorContainer, me?._owner.id]);
+  }, [cursorContainer, me?._owner.id, appActions]);
 
   const updateCursor = useCallback(
     (cursor: { position: XYPosition; dragging: boolean }) => {

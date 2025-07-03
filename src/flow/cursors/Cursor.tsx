@@ -1,5 +1,5 @@
 import { useRef, useCallback, useLayoutEffect } from "react";
-import { usePerfectCursor } from "./usePerfectCursor";
+import { useSmoothing } from "../../lib/useSmoothing";
 import type { XYPosition } from "@xyflow/react";
 import { MousePointer2 } from "lucide-react";
 
@@ -23,7 +23,7 @@ export function Cursor({
     );
   }, []);
 
-  const onPointMove = usePerfectCursor(animateCursor);
+  const onPointMove = useSmoothing(animateCursor);
 
   useLayoutEffect(() => onPointMove([point.x, point.y]), [onPointMove, point]);
 

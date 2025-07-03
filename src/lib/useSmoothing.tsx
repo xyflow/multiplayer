@@ -1,10 +1,7 @@
 import { PerfectCursor } from "perfect-cursors";
 import { useCallback, useLayoutEffect, useState } from "react";
 
-export function usePerfectCursor(
-  cb: (point: number[]) => void,
-  point?: number[]
-) {
+export function useSmoothing(cb: (point: number[]) => void, point?: number[]) {
   const [pc] = useState(() => new PerfectCursor(cb));
 
   useLayoutEffect(() => {
