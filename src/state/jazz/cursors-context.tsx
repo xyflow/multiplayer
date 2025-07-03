@@ -4,6 +4,7 @@ import {
   type ReactNode,
   useMemo,
   useCallback,
+  useRef,
 } from "react";
 import { useAccount, useCoState } from "jazz-tools/react";
 import { Group } from "jazz-tools";
@@ -23,7 +24,7 @@ export interface CursorsState {
 }
 
 export interface CursorsActions {
-  updateCursor: (cursor: { position: XYPosition; isDragging: boolean }) => void;
+  updateCursor: (cursor: { position: XYPosition; dragging: boolean }) => void;
 }
 
 export interface CursorsProvider {
@@ -33,10 +34,23 @@ export interface CursorsProvider {
 
 export const CursorsContext = createContext<CursorsProvider | null>(null);
 
+const allColors = [
+  "#D14D41",
+  "#DA702C",
+  "#D0A215",
+  "#879A39",
+  "#3AA99F",
+  "#4385BE",
+  "#8B7EC8",
+  "#CE5D97",
+];
+
 function JazzCursorsProvider({ children }: { children: ReactNode }) {
   const { rawState } = useCollaboration();
   //   console.log(rawState);
   const { me } = useAccount();
+
+  const colorMap = useRef(new Map<string, string>());
 
   const cursorContainer: DeeplyLoadedCursorContainer | null | undefined =
     useCoState(JazzCursorContainer, rawState?.cursors?.id, {
@@ -60,10 +74,18 @@ function JazzCursorsProvider({ children }: { children: ReactNode }) {
           return acc;
         }
 
+        if (!colorMap.current.has(entry.by.id)) {
+          colorMap.current.set(
+            entry.by.id,
+            allColors[Math.floor(Math.random() * allColors.length)]
+          );
+        }
+
         acc.push({
           user: entry.by.id,
           position: entry.value.position,
-          isDragging: entry.value.isDragging,
+          dragging: entry.value.dragging,
+          color: colorMap.current.get(entry.by.id)!,
         });
         return acc;
       },
@@ -72,14 +94,14 @@ function JazzCursorsProvider({ children }: { children: ReactNode }) {
   }, [cursorContainer, me?._owner.id]);
 
   const updateCursor = useCallback(
-    (cursor: { position: XYPosition; isDragging: boolean }) => {
+    (cursor: { position: XYPosition; dragging: boolean }) => {
       if (!cursorContainer?.feed) return;
 
       const group = cursorContainer._owner.castAs(Group);
       const newCursor = JazzCursor.create(
         {
           position: { ...cursor.position },
-          isDragging: cursor.isDragging,
+          dragging: cursor.dragging,
         },
         group
       );

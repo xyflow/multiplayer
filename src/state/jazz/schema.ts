@@ -26,7 +26,7 @@ export type JazzEdgeType = co.loaded<typeof JazzEdge>;
 
 export const JazzCursor = co.map({
   position: Position,
-  isDragging: z.boolean(),
+  dragging: z.boolean(),
 });
 
 export const JazzCursorContainer = co.map({

@@ -5,6 +5,7 @@ import {
   useStore,
   ViewportPortal,
   type ReactFlowStore,
+  type XYPosition,
 } from "@xyflow/react";
 
 import { useCursors } from "@/state/jazz/cursors-context";
@@ -24,7 +25,10 @@ export function Cursors() {
 
   const lastUpdateTimeRef = useRef<number>(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastPositionRef = useRef<{ x: number; y: number } | null>(null);
+  const lastPointerRef = useRef<{
+    position: XYPosition;
+    dragging: boolean;
+  } | null>(null);
 
   const handlePointerMove = useCallback(
     (e: PointerEvent) => {
@@ -35,12 +39,12 @@ export function Cursors() {
       });
 
       // Store the latest position
-      lastPositionRef.current = position;
+      lastPointerRef.current = { position, dragging: e.pressure > 0 };
 
       // If enough time has passed, send immediately
       if (now - lastUpdateTimeRef.current >= 150) {
         lastUpdateTimeRef.current = now;
-        updateCursor({ position, isDragging: false });
+        updateCursor(lastPointerRef.current);
 
         // Clear any pending timeout since we just sent an update
         if (timeoutRef.current) {
@@ -54,12 +58,9 @@ export function Cursors() {
         }
 
         timeoutRef.current = setTimeout(() => {
-          if (lastPositionRef.current) {
+          if (lastPointerRef.current) {
             lastUpdateTimeRef.current = Date.now();
-            updateCursor({
-              position: lastPositionRef.current,
-              isDragging: false,
-            });
+            updateCursor(lastPointerRef.current);
             timeoutRef.current = null;
           }
         }, 150 - (now - lastUpdateTimeRef.current));
@@ -67,11 +68,6 @@ export function Cursors() {
     },
     [screenToFlowPosition, updateCursor]
   );
-
-  // TODO: Handle pointer leave (later!)
-  // function handlePointerLeave(e: PointerEvent) {
-  //   console.log(e);
-  // }
 
   useEffect(() => {
     if (!domNode) return;
@@ -91,7 +87,12 @@ export function Cursors() {
   return (
     <ViewportPortal>
       {cursors.map((cursor) => (
-        <Cursor key={cursor.user} point={cursor.position} />
+        <Cursor
+          key={cursor.user}
+          point={cursor.position}
+          color={cursor.color}
+          dragging={cursor.dragging}
+        />
       ))}
     </ViewportPortal>
   );

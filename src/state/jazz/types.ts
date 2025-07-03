@@ -11,7 +11,8 @@ import type { DeeplyLoadedJazzFlow } from "./schema";
 export interface Cursor {
   user: string;
   position: XYPosition;
-  isDragging: boolean;
+  dragging: boolean;
+  color: string;
 }
 
 export interface FlowState {
