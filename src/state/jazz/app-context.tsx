@@ -43,6 +43,14 @@ function JazzAppProvider({ children }: { children: ReactNode }) {
   const root = useCoState(JazzRoot, me?.root?.id);
 
   const colorMap = useRef(new Map<string, string>());
+  const colorIndex = useRef(0);
+
+  function getNextUserColor() {
+    if (++colorIndex.current >= allColors.length) {
+      colorIndex.current = 0;
+    }
+    return allColors[colorIndex.current];
+  }
 
   const state: AppState = useMemo(
     () => ({
@@ -119,10 +127,7 @@ function JazzAppProvider({ children }: { children: ReactNode }) {
 
       getUserColor: (userId: string) => {
         if (!colorMap.current.has(userId)) {
-          colorMap.current.set(
-            userId,
-            allColors[Math.floor(Math.random() * allColors.length)]
-          );
+          colorMap.current.set(userId, getNextUserColor());
         }
         return colorMap.current.get(userId)!;
       },
