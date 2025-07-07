@@ -29,7 +29,12 @@ export default function App() {
     }
   }, [flowCode, appState.isLoading, appState.error, handleJoinFlow]);
 
-  if (!appState.userId) {
+  // Don't render anything until Jazz is loaded
+  if (
+    appState.activeFlowId === undefined ||
+    flowState === undefined ||
+    !appState.userId
+  ) {
     return null;
   }
 

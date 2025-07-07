@@ -50,8 +50,8 @@ function FlowContextProvider({ children }: { children: ReactNode }) {
     resolve: resolveFlow,
   });
 
-  const currentFlow: FlowState | null = useMemo(() => {
-    if (!rawState) return null;
+  const currentFlow: FlowState | null | undefined = useMemo(() => {
+    if (!rawState) return rawState;
 
     const jazzFlow = rawState;
 

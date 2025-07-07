@@ -46,7 +46,7 @@ function JazzAppProvider({ children }: { children: ReactNode }) {
 
   const state: AppState = useMemo(
     () => ({
-      activeFlowId: root?.activeFlow?.id || null,
+      activeFlowId: root?.activeFlow?.id || null || undefined,
       userId: me?._owner.id || null,
       isLoading,
       error,

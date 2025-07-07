@@ -25,7 +25,7 @@ export interface Connection {
 }
 
 export interface AppState {
-  activeFlowId: string | null;
+  activeFlowId: string | null | undefined;
   userId: string | null;
   isLoading: boolean;
   error: string | null;
@@ -69,6 +69,6 @@ export interface FlowActions {
 }
 
 export interface FlowProvider {
-  state: FlowState | null;
+  state: FlowState | null | undefined;
   actions: FlowActions;
 }
