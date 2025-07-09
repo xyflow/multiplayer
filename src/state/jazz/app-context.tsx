@@ -94,14 +94,14 @@ function JazzAppProvider({ children }: { children: ReactNode }) {
         );
       },
 
-      joinFlow: async (flowCode: string): Promise<boolean> => {
-        if (!flowCode || !root) return false;
+      joinFlow: async (flowId: string): Promise<boolean> => {
+        if (!flowId || !root) return false;
 
         setIsLoading(true);
         setError(null);
 
         try {
-          const flow = await JazzFlow.load(flowCode);
+          const flow = await JazzFlow.load(flowId);
 
           if (!flow) {
             setError("Invalid flow code");

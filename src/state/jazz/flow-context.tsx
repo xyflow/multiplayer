@@ -55,9 +55,13 @@ function FlowContextProvider({ children }: { children: ReactNode }) {
 
     const jazzFlow = rawState;
 
+    const deletedNodes = new Map(nodeCache);
+    const deletedEdges = new Map(edgeCache);
+
     // Convert Jazz nodes to React Flow nodes with caching
     const nodes = jazzFlow.nodes.map((jazzNode) => {
       const cached = nodeCache.get(jazzNode.id);
+      deletedNodes.delete(jazzNode.id);
 
       if (cached?.jazzNode === jazzNode) {
         return cached.node;
@@ -68,9 +72,14 @@ function FlowContextProvider({ children }: { children: ReactNode }) {
       return newNode;
     });
 
+    deletedNodes.forEach((cached) => {
+      nodeCache.delete(cached.jazzNode.id);
+    });
+
     // Convert Jazz edges to React Flow edges with caching
     const edges = jazzFlow.edges.map((jazzEdge) => {
       const cached = edgeCache.get(jazzEdge.id);
+      deletedEdges.delete(jazzEdge.id);
 
       if (cached?.jazzEdge === jazzEdge) {
         return cached.edge;
@@ -79,6 +88,10 @@ function FlowContextProvider({ children }: { children: ReactNode }) {
       const newEdge = { ...cached?.edge, ...jazzEdge, id: jazzEdge.id };
       edgeCache.set(jazzEdge.id, { jazzEdge, edge: newEdge });
       return newEdge;
+    });
+
+    deletedEdges.forEach((cached) => {
+      edgeCache.delete(cached.jazzEdge.id);
     });
 
     return {
