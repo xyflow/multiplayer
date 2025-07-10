@@ -7,7 +7,7 @@ import {
   useRef,
 } from "react";
 import { JazzReactProvider, useAccount, useCoState } from "jazz-tools/react";
-import { Group, co, z } from "jazz-tools";
+import { Group, co } from "jazz-tools";
 import {
   JazzNode,
   JazzEdge,
@@ -16,7 +16,6 @@ import {
   Account,
   JazzCursorContainer,
   JazzConnectionContainer,
-  JazzConnection,
 } from "./schema";
 import type { AppState, AppActions, AppProvider } from "./types";
 
@@ -86,9 +85,11 @@ function JazzAppProvider({ children }: { children: ReactNode }) {
             ),
             connections: JazzConnectionContainer.create(
               {
-                feed: co
-                  .feed(z.optional(JazzConnection))
-                  .create([], publicGroup),
+                feed: JazzConnectionContainer.def.shape.feed.create(
+                  [],
+                  publicGroup
+                ),
+                version: 1,
               },
               publicGroup
             ),

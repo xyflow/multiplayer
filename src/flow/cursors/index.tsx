@@ -24,7 +24,7 @@ export function Cursors() {
   } = useCursors();
 
   // Throttle cursor updates to 150ms
-  const throttledUpdateCursor = useThrottle(updateCursor, { delay: 200 });
+  const throttledUpdateCursor = useThrottle(updateCursor, { delay: 64 });
 
   const handlePointerMove = useCallback(
     (e: PointerEvent) => {

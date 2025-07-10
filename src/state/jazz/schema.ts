@@ -29,16 +29,18 @@ export const JazzCursor = co.map({
   dragging: z.boolean(),
 });
 
-export const JazzCursorContainer = co.map({
-  feed: co.feed(z.string()),
-  version: z.literal(1),
-}).withMigration((container) => {
-  if (container.version === undefined) {
-    container.version = 1;
-    // Reset the feed to an empty feed
-    container.feed = co.feed(z.string()).create([], container._owner);
-  }
-});
+export const JazzCursorContainer = co
+  .map({
+    feed: co.feed(z.string()),
+    version: z.literal(1),
+  })
+  .withMigration((container) => {
+    if (container.version === undefined) {
+      container.version = 1;
+      // Reset the feed to an empty feed
+      container.feed = co.feed(z.string()).create([], container._owner);
+    }
+  });
 
 export type DeeplyLoadedCursorContainer = co.loaded<
   typeof JazzCursorContainer,
@@ -59,9 +61,18 @@ export const JazzConnection = co.map({
   position: Position,
 });
 
-export const JazzConnectionContainer = co.map({
-  feed: co.feed(z.optional(JazzConnection)),
-});
+export const JazzConnectionContainer = co
+  .map({
+    feed: co.feed(z.string()),
+    version: z.literal(1),
+  })
+  .withMigration((container) => {
+    if (container.version === undefined) {
+      container.version = 1;
+      // Reset the feed to an empty feed
+      container.feed = co.feed(z.string()).create([], container._owner);
+    }
+  });
 
 export type DeeplyLoadedConnectionContainer = co.loaded<
   typeof JazzConnectionContainer,

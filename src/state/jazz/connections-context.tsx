@@ -6,12 +6,7 @@ import {
   useCallback,
 } from "react";
 import { useAccount, useCoState } from "jazz-tools/react";
-import { Group } from "jazz-tools";
-import {
-  JazzConnection,
-  JazzFlow,
-  type DeeplyLoadedConnectionContainer,
-} from "./schema";
+import { JazzFlow, type DeeplyLoadedConnectionContainer } from "./schema";
 import type { Connection } from "./types";
 import { useApp } from "./app-context";
 
@@ -39,6 +34,36 @@ export const ConnectionsContext = createContext<ConnectionsProvider | null>(
   null
 );
 
+function serializeValues(entry: Connection) {
+  return `${entry.source}/${entry.sourceType}/${entry.sourceHandle || ""}/${
+    entry.target || ""
+  }/${entry.targetType || ""}/${entry.targetHandle || ""}/${entry.position.x}/${
+    entry.position.y
+  }`;
+}
+
+function deserializeValues(value: string): Connection {
+  const [
+    source,
+    sourceType,
+    sourceHandle,
+    target,
+    targetType,
+    targetHandle,
+    x,
+    y,
+  ] = value.split("/");
+  return {
+    source,
+    sourceType: sourceType as "source" | "target",
+    sourceHandle: sourceHandle || undefined,
+    target: target || undefined,
+    targetType: targetType ? (targetType as "source" | "target") : undefined,
+    targetHandle: targetHandle || undefined,
+    position: { x: Number(x), y: Number(y) },
+  };
+}
+
 function JazzConnectionsProvider({ children }: { children: ReactNode }) {
   const { state: appState, actions: appActions } = useApp();
   const { me } = useAccount();
@@ -65,7 +90,7 @@ function JazzConnectionsProvider({ children }: { children: ReactNode }) {
           return acc;
         }
 
-        // Filter out current user and old connections (older than 10 seconds)
+        // Filter out current user and old connections (older than 5 seconds)
         if (
           entry.by.id === me?._owner.id ||
           now - entry.madeAt.getTime() > 5000
@@ -73,15 +98,17 @@ function JazzConnectionsProvider({ children }: { children: ReactNode }) {
           return acc;
         }
 
+        const values = deserializeValues(entry.value);
+
         acc.push({
           user: entry.by.id,
-          source: entry.value.source,
-          sourceType: entry.value.sourceType,
-          sourceHandle: entry.value.sourceHandle,
-          target: entry.value.target,
-          targetType: entry.value.targetType,
-          targetHandle: entry.value.targetHandle,
-          position: entry.value.position,
+          source: values.source,
+          sourceType: values.sourceType,
+          sourceHandle: values.sourceHandle,
+          target: values.target,
+          targetType: values.targetType,
+          targetHandle: values.targetHandle,
+          position: values.position,
           color: appActions.getUserColor(entry.by.id),
         });
 
@@ -95,29 +122,19 @@ function JazzConnectionsProvider({ children }: { children: ReactNode }) {
     (connection?: Connection) => {
       if (!connectionContainer?.feed) return;
 
-      const group = connectionContainer._owner.castAs(Group);
-
-      const newConnection = JazzConnection.create(
-        connection
-          ? {
-              source: connection.source,
-              sourceType: connection.sourceType,
-              sourceHandle: connection.sourceHandle,
-              target: connection.target,
-              targetType: connection.targetType,
-              targetHandle: connection.targetHandle,
-              position: connection.position,
-            }
-          : {
-              source: "",
-              sourceType: "source",
-              sourceHandle: "",
-              position: { x: 0, y: 0 },
-            },
-        group
-      );
-
-      connectionContainer.feed.push(newConnection);
+      if (connection) {
+        connectionContainer.feed.push(serializeValues(connection));
+      } else {
+        // Push an empty connection when clearing
+        connectionContainer.feed.push(
+          serializeValues({
+            source: "",
+            sourceType: "source",
+            sourceHandle: "",
+            position: { x: 0, y: 0 },
+          })
+        );
+      }
     },
     [connectionContainer]
   );
