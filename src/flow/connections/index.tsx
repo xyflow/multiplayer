@@ -10,7 +10,7 @@ export function Connections() {
 
   // Throttle connection updates to 100ms for smoother real-time collaboration
   const throttledUpdateConnection = useThrottle(actions.updateConnection, {
-    delay: 200,
+    delay: 64,
   });
 
   useEffect(() => {
