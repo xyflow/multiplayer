@@ -30,13 +30,14 @@ export default function App() {
   }, [flowCode, appState.isLoading, appState.error, handleJoinFlow]);
 
   // Don't render anything until Jazz is loaded
-  if (
-    appState.activeFlowId === undefined ||
-    flowState === undefined ||
-    !appState.userId
-  ) {
-    return null;
-  }
+  // TODO: this does not work because activeFlowId is
+  // if (
+  //   appState.activeFlowId === undefined ||
+  //   flowState === undefined ||
+  //   !appState.userId
+  // ) {
+  //   return null;
+  // }
 
   if (flowState) {
     return (

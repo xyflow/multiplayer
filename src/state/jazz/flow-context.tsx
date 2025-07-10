@@ -51,6 +51,8 @@ function FlowContextProvider({ children }: { children: ReactNode }) {
   });
 
   const currentFlow: FlowState | null | undefined = useMemo(() => {
+    if (appState.activeFlowId === undefined) return undefined;
+
     if (!rawState) return rawState;
 
     const jazzFlow = rawState;
