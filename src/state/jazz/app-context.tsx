@@ -15,7 +15,6 @@ import {
   JazzRoot,
   Account,
   JazzCursorContainer,
-  JazzCursor,
   JazzConnectionContainer,
   JazzConnection,
 } from "./schema";
@@ -77,7 +76,11 @@ function JazzAppProvider({ children }: { children: ReactNode }) {
             edges: co.list(JazzEdge).create([], publicGroup),
             cursors: JazzCursorContainer.create(
               {
-                feed: co.feed(JazzCursor).create([], publicGroup),
+                feed: JazzCursorContainer.def.shape.feed.create(
+                  [],
+                  publicGroup
+                ),
+                version: 1,
               },
               publicGroup
             ),

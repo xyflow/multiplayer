@@ -30,7 +30,14 @@ export const JazzCursor = co.map({
 });
 
 export const JazzCursorContainer = co.map({
-  feed: co.feed(JazzCursor),
+  feed: co.feed(z.string()),
+  version: z.literal(1),
+}).withMigration((container) => {
+  if (container.version === undefined) {
+    container.version = 1;
+    // Reset the feed to an empty feed
+    container.feed = co.feed(z.string()).create([], container._owner);
+  }
 });
 
 export type DeeplyLoadedCursorContainer = co.loaded<

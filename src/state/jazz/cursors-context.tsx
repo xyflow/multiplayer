@@ -6,10 +6,8 @@ import {
   useCallback,
 } from "react";
 import { useAccount, useCoState } from "jazz-tools/react";
-import { Group } from "jazz-tools";
 import type { XYPosition } from "@xyflow/react";
 import {
-  JazzCursor,
   JazzFlow,
   type DeeplyLoadedCursorContainer,
 } from "./schema";
@@ -32,6 +30,18 @@ export interface CursorsProvider {
 }
 
 export const CursorsContext = createContext<CursorsProvider | null>(null);
+
+function serializeValues(entry: { position: XYPosition; dragging: boolean }) {
+  return `${entry.position.x}/${entry.position.y}/${entry.dragging ? "1" : "0"}`;
+}
+
+function deserializeValues(value: string) {
+  const [x, y, dragging] = value.split("/");
+  return {
+    position: { x: Number(x), y: Number(y) },
+    dragging: dragging === "1",
+  };
+}
 
 function JazzCursorsProvider({ children }: { children: ReactNode }) {
   const { state: appState, actions: appActions } = useApp();
@@ -62,10 +72,12 @@ function JazzCursorsProvider({ children }: { children: ReactNode }) {
           return acc;
         }
 
+        const values = deserializeValues(entry.value);
+
         acc.push({
           user: entry.by.id,
-          position: entry.value.position,
-          dragging: entry.value.dragging,
+          position: values.position,
+          dragging: values.dragging,
           color: appActions.getUserColor(entry.by.id),
         });
         return acc;
@@ -78,16 +90,12 @@ function JazzCursorsProvider({ children }: { children: ReactNode }) {
     (cursor: { position: XYPosition; dragging: boolean }) => {
       if (!cursorContainer?.feed) return;
 
-      const group = cursorContainer._owner.castAs(Group);
-      const newCursor = JazzCursor.create(
-        {
-          position: { ...cursor.position },
+      cursorContainer.feed.push(
+        serializeValues({
+          position: cursor.position,
           dragging: cursor.dragging,
-        },
-        group
+        })
       );
-
-      cursorContainer.feed.push(newCursor);
     },
     [cursorContainer]
   );
