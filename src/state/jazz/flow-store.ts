@@ -8,7 +8,7 @@ import {
   type JazzNodeType,
   type LoadedJazzFlow,
 } from "./schema";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { type Edge, type Node } from "@xyflow/react";
 import { Group } from "jazz-tools";
 
@@ -39,22 +39,17 @@ function deriveArray<T extends { id: string }>(
 
 export function useInitializeFlowStore(flowId: string) {
   const unsubscribe = useRef(() => {});
-  const useFlowStore = useRef<UseBoundStore<StoreApi<FlowStore>> | undefined>(
-    undefined
-  );
 
-  const nodeCache = useRef<Map<string, { jazz: JazzNodeType; item: Node }>>(
-    new Map()
-  );
+  const [useFlowStore] = useState<
+    UseBoundStore<StoreApi<FlowStore>> | undefined
+  >(() => {
+    let nodeCache: Map<string, { jazz: JazzNodeType; item: Node }> = new Map();
 
-  const edgeCache = useRef<Map<string, { jazz: JazzEdgeType; item: Edge }>>(
-    new Map()
-  );
+    let edgeCache: Map<string, { jazz: JazzEdgeType; item: Edge }> = new Map();
 
-  let rawState = useRef<LoadedJazzFlow | undefined>(undefined);
+    let rawState: LoadedJazzFlow | undefined = undefined;
 
-  if (!useFlowStore.current) {
-    useFlowStore.current = create<FlowStore>((set, get) => {
+    return create<FlowStore>((set, get) => {
       unsubscribe.current = JazzFlow.subscribe(
         flowId,
         {
@@ -64,10 +59,10 @@ export function useInitializeFlowStore(flowId: string) {
           },
         },
         (jazzFlow) => {
-          const nodes = deriveArray(jazzFlow.nodes, nodeCache.current);
-          const edges = deriveArray(jazzFlow.edges, edgeCache.current);
+          const nodes = deriveArray(jazzFlow.nodes, nodeCache);
+          const edges = deriveArray(jazzFlow.edges, edgeCache);
 
-          rawState.current = jazzFlow;
+          rawState = jazzFlow;
 
           set({
             id: jazzFlow.id,
@@ -84,7 +79,7 @@ export function useInitializeFlowStore(flowId: string) {
         nodes: [],
         edges: [],
         onNodesChange: (changes) => {
-          if (!rawState.current) return;
+          if (!rawState) return;
 
           let includesDimensionChange = false;
 
@@ -92,7 +87,7 @@ export function useInitializeFlowStore(flowId: string) {
             switch (change.type) {
               case "dimensions": {
                 includesDimensionChange = true;
-                const cachedNode = nodeCache.current.get(change.id);
+                const cachedNode = nodeCache.get(change.id);
                 if (!cachedNode) return;
                 cachedNode.item = {
                   ...cachedNode.item,
@@ -103,14 +98,14 @@ export function useInitializeFlowStore(flowId: string) {
 
               case "position": {
                 if (!change.position) return;
-                const cachedNode = nodeCache.current.get(change.id);
+                const cachedNode = nodeCache.get(change.id);
                 if (!cachedNode) return;
                 cachedNode.jazz.position = change.position;
                 break;
               }
 
               case "select": {
-                const cachedNode = nodeCache.current.get(change.id);
+                const cachedNode = nodeCache.get(change.id);
                 if (!cachedNode) return;
                 cachedNode.item = {
                   ...cachedNode.item,
@@ -120,13 +115,13 @@ export function useInitializeFlowStore(flowId: string) {
               }
 
               case "remove": {
-                nodeCache.current.delete(change.id);
-                if (rawState.current) {
-                  const index = rawState.current.nodes.findIndex(
+                nodeCache.delete(change.id);
+                if (rawState) {
+                  const index = rawState.nodes.findIndex(
                     (node) => node.id === change.id
                   );
                   if (index !== -1) {
-                    rawState.current.nodes.splice(index, 1);
+                    rawState.nodes.splice(index, 1);
                   }
                 }
                 break;
@@ -135,14 +130,15 @@ export function useInitializeFlowStore(flowId: string) {
           });
 
           if (includesDimensionChange) {
+            //TODO: trigger a re-render
           }
         },
         onEdgesChange: (changes) => {
-          if (!rawState.current) return;
+          if (!rawState) return;
           changes.forEach((change) => {
             switch (change.type) {
               case "select": {
-                const cachedEdge = edgeCache.current.get(change.id);
+                const cachedEdge = edgeCache.get(change.id);
                 if (!cachedEdge) return;
                 cachedEdge.item = {
                   ...cachedEdge.item,
@@ -152,13 +148,13 @@ export function useInitializeFlowStore(flowId: string) {
               }
 
               case "remove": {
-                edgeCache.current.delete(change.id);
-                if (rawState.current) {
-                  const index = rawState.current.edges.findIndex(
+                edgeCache.delete(change.id);
+                if (rawState) {
+                  const index = rawState.edges.findIndex(
                     (edge) => edge.id === change.id
                   );
                   if (index !== -1) {
-                    rawState.current.edges.splice(index, 1);
+                    rawState.edges.splice(index, 1);
                   }
                 }
                 break;
@@ -167,10 +163,9 @@ export function useInitializeFlowStore(flowId: string) {
           });
         },
         onConnect: (connection) => {
-          if (!connection.source || !connection.target || !rawState.current)
-            return;
+          if (!connection.source || !connection.target || !rawState) return;
 
-          const group = rawState.current._owner.castAs(Group);
+          const group = rawState._owner.castAs(Group);
           const newEdge = JazzEdge.create(
             {
               type: "default",
@@ -182,12 +177,12 @@ export function useInitializeFlowStore(flowId: string) {
             group
           );
 
-          rawState.current.edges.push(newEdge);
+          rawState.edges.push(newEdge);
         },
         addNode: (node) => {
-          if (!rawState.current) return;
+          if (!rawState) return;
 
-          const group = rawState.current._owner.castAs(Group);
+          const group = rawState._owner.castAs(Group);
           const newNode = JazzNode.create(
             {
               type: node.type || "default",
@@ -196,12 +191,12 @@ export function useInitializeFlowStore(flowId: string) {
             },
             group
           );
-          rawState.current.nodes.push(newNode);
+          rawState.nodes.push(newNode);
         },
         addEdge: (edge) => {
-          if (!rawState.current) return;
+          if (!rawState) return;
 
-          const group = rawState.current._owner.castAs(Group);
+          const group = rawState._owner.castAs(Group);
           const newEdge = JazzEdge.create(
             {
               type: edge.type || "default",
@@ -212,29 +207,27 @@ export function useInitializeFlowStore(flowId: string) {
             },
             group
           );
-          rawState.current.edges.push(newEdge);
+          rawState.edges.push(newEdge);
         },
         updateNodeData: (nodeId, data) => {
-          if (!rawState.current) return;
+          if (!rawState) return;
 
-          const jazzNode = rawState.current.nodes.find(
-            (node) => node.id === nodeId
-          );
+          const jazzNode = rawState.nodes.find((node) => node.id === nodeId);
           if (jazzNode) {
             jazzNode.data = { ...jazzNode.data, ...data };
           }
         },
       };
     });
-  }
+  });
 
   useEffect(() => {
     return () => {
       unsubscribe.current();
     };
-  });
+  }, []);
 
   return {
-    useFlowStore: useFlowStore.current,
+    useFlowStore,
   };
 }
