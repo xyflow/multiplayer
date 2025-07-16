@@ -8,7 +8,7 @@ import {
   type JazzNodeType,
   type LoadedJazzFlow,
 } from "./schema";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { type Edge, type Node } from "@xyflow/react";
 import { Group } from "jazz-tools";
 
@@ -37,9 +37,9 @@ function deriveArray<T extends { id: string }>(
   return derivedArray;
 }
 
-export function createFlowStore(flowId: string) {
+export function useInitializeFlowStore(flowId: string) {
   const unsubscribe = useRef(() => {});
-  const useAppStore = useRef<UseBoundStore<StoreApi<FlowStore>> | undefined>(
+  const useFlowStore = useRef<UseBoundStore<StoreApi<FlowStore>> | undefined>(
     undefined
   );
 
@@ -53,8 +53,8 @@ export function createFlowStore(flowId: string) {
 
   let rawState = useRef<LoadedJazzFlow | undefined>(undefined);
 
-  if (!useAppStore.current) {
-    useAppStore.current = create<FlowStore>((set, get) => {
+  if (!useFlowStore.current) {
+    useFlowStore.current = create<FlowStore>((set, get) => {
       unsubscribe.current = JazzFlow.subscribe(
         flowId,
         {
@@ -228,5 +228,13 @@ export function createFlowStore(flowId: string) {
     });
   }
 
-  return { useAppStore: useAppStore.current, unsubscribe: unsubscribe.current };
+  useEffect(() => {
+    return () => {
+      unsubscribe.current();
+    };
+  });
+
+  return {
+    useFlowStore: useFlowStore.current,
+  };
 }
