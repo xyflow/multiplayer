@@ -99,6 +99,14 @@ export type DeeplyLoadedJazzFlow = co.loaded<
   }
 >;
 
+export type LoadedJazzFlow = co.loaded<
+  typeof JazzFlow,
+  {
+    nodes: { $each: true };
+    edges: { $each: true };
+  }
+>;
+
 export const JazzRoot = co.map({
   activeFlow: z.optional(JazzFlow),
 });

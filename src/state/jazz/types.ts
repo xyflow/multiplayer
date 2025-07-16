@@ -53,12 +53,12 @@ export interface FlowActions {
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
-  addNode: (nodeData: {
+  addNode: (node: {
     type?: string;
     position: XYPosition;
     data?: Node["data"];
   }) => void;
-  addEdge: (edgeData: {
+  addEdge: (node: {
     type?: string;
     source: string;
     target: string;
@@ -67,6 +67,8 @@ export interface FlowActions {
   }) => void;
   updateNodeData: (nodeId: string, newData: Node["data"]) => void;
 }
+
+export interface FlowStore extends FlowState, FlowActions {}
 
 export interface FlowProvider {
   state: FlowState | null | undefined;
