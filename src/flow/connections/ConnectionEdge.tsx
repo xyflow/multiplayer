@@ -1,4 +1,3 @@
-import type { ConnectionOfUser } from "@/state/jazz/connections-context";
 import {
   BaseEdge,
   getBezierPath,
@@ -10,6 +9,7 @@ import {
 } from "@xyflow/react";
 import { useState, useLayoutEffect, useCallback } from "react";
 import { useSmoothing } from "@/lib/useSmoothing";
+import type { ConnectionOfUser } from "@/state/jazz/types";
 
 function getOppositePosition(position: Position): Position {
   switch (position) {

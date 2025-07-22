@@ -39,7 +39,7 @@ export interface ConnectionStore {
   setConnections: (
     jazzConnections?: DeeplyLoadedConnectionContainer | null
   ) => void;
-  updateConnection: (connection: Connection) => void;
+  updateConnection: (connection?: Connection) => void;
 }
 
 export const createConnectionSlice: StateCreator<

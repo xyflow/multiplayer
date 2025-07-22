@@ -128,6 +128,7 @@ export const useAppStore = create<AppStore>((set, get, store) => {
       const { jazzRoot } = get();
       if (!jazzRoot) return;
       jazzRoot.activeFlow = undefined;
+      set({ activeFlowId: undefined });
     },
     ...createFlowSlice(set, get, store),
     ...createConnectionSlice(set, get, store),
