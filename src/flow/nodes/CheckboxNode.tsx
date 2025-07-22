@@ -1,11 +1,16 @@
 import { useOptimistic, useCallback, startTransition } from "react";
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
-import { useFlow } from "@/state/jazz/flow-context";
+import { useAppStore, type AppStore } from "@/state/jazz/app-store";
+import { useShallow } from "zustand/shallow";
+
+const selector = (state: AppStore) => ({
+  updateNodeData: state.updateNodeData,
+});
 
 export type CheckboxNodeType = Node<{ checked: boolean }>;
 
 export function CheckboxNode({ id, data }: NodeProps<CheckboxNodeType>) {
-  const { actions } = useFlow();
+  const { updateNodeData } = useAppStore(useShallow(selector));
 
   const [optimisticChecked, setOptimisticChecked] = useOptimistic(
     data.checked,
@@ -18,9 +23,9 @@ export function CheckboxNode({ id, data }: NodeProps<CheckboxNodeType>) {
         setOptimisticChecked(checked);
       });
 
-      actions.updateNodeData(id, { checked });
+      updateNodeData(id, { checked });
     },
-    [actions, id, setOptimisticChecked]
+    [updateNodeData, id, setOptimisticChecked]
   );
 
   return (

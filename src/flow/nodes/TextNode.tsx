@@ -1,12 +1,18 @@
 import { useOptimistic, useCallback, startTransition } from "react";
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
 import { Input } from "@/components/ui/input";
-import { useFlow } from "@/state/jazz/flow-context";
+import { useAppStore } from "@/state/jazz/app-store";
+import { type AppStore } from "@/state/jazz/app-store";
+import { useShallow } from "zustand/shallow";
+
+const selector = (state: AppStore) => ({
+  updateNodeData: state.updateNodeData,
+});
 
 export type TextNode = Node<{ text: string }>;
 
 export function TextNode({ id, data }: NodeProps<TextNode>) {
-  const { actions } = useFlow();
+  const { updateNodeData } = useAppStore(useShallow(selector));
 
   // Use optimistic updates for immediate UI feedback
   const [optimisticValue, setOptimisticValue] = useOptimistic(
@@ -22,9 +28,9 @@ export function TextNode({ id, data }: NodeProps<TextNode>) {
       });
 
       // Update the Jazz node data through the flow context
-      actions.updateNodeData(id, { text: value });
+      updateNodeData(id, { text: value });
     },
-    [actions, id, setOptimisticValue]
+    [updateNodeData, id, setOptimisticValue]
   );
 
   return (

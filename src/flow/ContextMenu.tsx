@@ -1,29 +1,28 @@
 import { Button } from "@/components/ui/button";
 import { Square, Type } from "lucide-react";
-import type { FlowActions } from "@/state/jazz/types";
 import { useReactFlow } from "@xyflow/react";
+import { useAppStore, type AppStore } from "@/state/jazz/app-store";
+import { useShallow } from "zustand/shallow";
 
 interface ContextMenuProps {
   visible: boolean;
   x: number;
   y: number;
-  flowActions: FlowActions;
   onHide: () => void;
 }
 
-export function ContextMenu({
-  visible,
-  x,
-  y,
-  flowActions,
-  onHide,
-}: ContextMenuProps) {
+const selector = (state: AppStore) => ({
+  addNode: state.addNode,
+});
+
+export function ContextMenu({ visible, x, y, onHide }: ContextMenuProps) {
+  const { addNode } = useAppStore(useShallow(selector));
   const { screenToFlowPosition } = useReactFlow();
 
   if (!visible) return null;
 
   const addCheckboxNode = (position: { x: number; y: number }) => {
-    flowActions.addNode({
+    addNode({
       type: "checkbox",
       position: screenToFlowPosition(position),
       data: {
@@ -34,7 +33,7 @@ export function ContextMenu({
   };
 
   const addTextNode = (position: { x: number; y: number }) => {
-    flowActions.addNode({
+    addNode({
       type: "text",
       position: screenToFlowPosition(position),
       data: {

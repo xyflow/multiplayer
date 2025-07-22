@@ -1,15 +1,22 @@
-import { useConnections } from "@/state/jazz/connections-context";
 import { useConnection, ViewportPortal } from "@xyflow/react";
 import { useEffect } from "react";
 import { useThrottle } from "@/lib/useThrottle";
 import { ConnectionEdge } from "./ConnectionEdge";
+import { useAppStore } from "@/state/jazz/app-store";
+import { type AppStore } from "@/state/jazz/app-store";
+import { useShallow } from "zustand/shallow";
+
+const selector = (state: AppStore) => ({
+  connections: state.connections,
+  updateConnection: state.updateConnection,
+});
 
 export function Connections() {
-  const { state, actions } = useConnections();
   const connection = useConnection();
+  const { connections, updateConnection } = useAppStore(useShallow(selector));
 
   // Throttle connection updates to 100ms for smoother real-time collaboration
-  const throttledUpdateConnection = useThrottle(actions.updateConnection, {
+  const throttledUpdateConnection = useThrottle(updateConnection, {
     delay: 64,
   });
 
@@ -34,7 +41,7 @@ export function Connections() {
 
   return (
     <ViewportPortal>
-      {state.connections.map((connection) => (
+      {connections.map((connection) => (
         <ConnectionEdge key={connection.user} connection={connection} />
       ))}
     </ViewportPortal>

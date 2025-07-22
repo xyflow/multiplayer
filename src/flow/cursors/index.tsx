@@ -7,9 +7,15 @@ import {
   type ReactFlowStore,
 } from "@xyflow/react";
 
-import { useCursors } from "@/state/jazz/cursors-context";
 import { useThrottle } from "@/lib/useThrottle";
 import { Cursor } from "./Cursor";
+import { useAppStore } from "@/state/jazz/app-store";
+import { type AppStore } from "@/state/jazz/app-store";
+
+const selector = (state: AppStore) => ({
+  cursors: state.cursors,
+  updateCursor: state.updateCursor,
+});
 
 export function Cursors() {
   const domNode = useStore(
@@ -18,10 +24,7 @@ export function Cursors() {
 
   const { screenToFlowPosition } = useReactFlow();
 
-  const {
-    state: { cursors },
-    actions: { updateCursor },
-  } = useCursors();
+  const { cursors, updateCursor } = useAppStore(useShallow(selector));
 
   // Throttle cursor updates to 150ms
   const throttledUpdateCursor = useThrottle(updateCursor, { delay: 64 });

@@ -107,6 +107,13 @@ export type LoadedJazzFlow = co.loaded<
   }
 >;
 
+export type LoadedJazzRoot = co.loaded<
+  typeof JazzRoot,
+  {
+    activeFlow: true;
+  }
+>;
+
 export const JazzRoot = co.map({
   activeFlow: z.optional(JazzFlow),
 });

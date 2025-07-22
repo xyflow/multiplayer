@@ -1,16 +1,16 @@
 import { Button } from "@/components/ui/button";
-import type { FlowActions, FlowState } from "@/state/jazz/types";
-import { useApp } from "@/state/jazz/app-context";
 
 import { ReactFlow, MiniMap, Controls, Background, Panel } from "@xyflow/react";
 import { Share2, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Cursors } from "./cursors";
 import { CheckboxNode } from "./nodes/CheckboxNode";
 import { TextNode } from "./nodes/TextNode";
-import { Connections } from "./connections";
 import { ContextMenu } from "./ContextMenu";
+import { useAppStore, type AppStore } from "@/state/jazz/app-store";
+import { Cursors } from "./cursors";
+import { Connections } from "./connections";
+import { useShallow } from "zustand/shallow";
 
 // Register custom node types
 const nodeTypes = {
@@ -18,16 +18,28 @@ const nodeTypes = {
   text: TextNode,
 };
 
-export function Flow({
-  flow,
-  actions: flowActions,
-}: {
-  flow: FlowState;
-  actions: FlowActions;
-}) {
-  const { actions: appActions } = useApp();
+const selector = (state: AppStore) => ({
+  exitFlow: state.exitFlow,
+  nodes: state.nodes,
+  edges: state.edges,
+  onNodesChange: state.onNodesChange,
+  onEdgesChange: state.onEdgesChange,
+  onConnect: state.onConnect,
+  activeFlowId: state.activeFlowId,
+});
 
-  const [fitView] = useState(flow.nodes.length > 0);
+export function Flow() {
+  const {
+    exitFlow,
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
+    activeFlowId,
+  } = useAppStore(useShallow(selector));
+
+  const [fitView] = useState(nodes.length > 0);
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
@@ -40,8 +52,8 @@ export function Flow({
 
   return (
     <ReactFlow
-      nodes={flow.nodes}
-      edges={flow.edges}
+      nodes={nodes}
+      edges={edges}
       nodeTypes={nodeTypes}
       onPointerDown={(e) => {
         // Right mouse button is button 2
@@ -60,9 +72,9 @@ export function Flow({
       onContextMenu={(e) => {
         e.preventDefault(); // Prevent default context menu
       }}
-      onNodesChange={flowActions.onNodesChange}
-      onEdgesChange={flowActions.onEdgesChange}
-      onConnect={flowActions.onConnect}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onConnect={onConnect}
       fitView={fitView}
       minZoom={0}
     >
@@ -70,7 +82,7 @@ export function Flow({
         <Button
           variant="outline"
           className="bg-red-50 hover:bg-red-100 border-red-200 text-red-700"
-          onClick={appActions.exitFlow}
+          onClick={exitFlow}
         >
           <X className="h-4 w-4" />
           Exit
@@ -80,7 +92,7 @@ export function Flow({
           className="bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700"
           onClick={async () => {
             try {
-              await navigator.clipboard.writeText(flow.id);
+              await navigator.clipboard.writeText(activeFlowId || "");
               toast("Flow ID copied to clipboard", {
                 position: "top-right",
               });
@@ -101,7 +113,6 @@ export function Flow({
         visible={contextMenu.visible}
         x={contextMenu.x}
         y={contextMenu.y}
-        flowActions={flowActions}
         onHide={hideContextMenu}
       />
 

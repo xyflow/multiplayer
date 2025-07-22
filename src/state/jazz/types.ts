@@ -24,6 +24,11 @@ export interface Connection {
   position: XYPosition;
 }
 
+export interface ConnectionOfUser extends Connection {
+  user: string;
+  color: string;
+}
+
 export interface AppState {
   activeFlowId: string | null | undefined;
   userId: string | null;

@@ -1,33 +1,42 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCallback, useEffect, useState } from "react";
-import { useApp } from "./state/jazz/app-context";
-import { useFlow } from "./state/jazz/flow-context";
-import FlowApp from "./FlowApp";
 import { ReactFlowProvider } from "@xyflow/react";
+import { useAppStore, type AppStore } from "./state/jazz/app-store";
+import { useShallow } from "zustand/shallow";
+import { Flow } from "./flow";
+
+const selector = (state: AppStore) => ({
+  activeFlowId: state.activeFlowId,
+  isLoading: state.isLoading,
+  error: state.error,
+  joinFlow: state.joinFlow,
+  createFlow: state.createFlow,
+});
 
 export default function App() {
-  const { state: appState, actions: appActions } = useApp();
-  const { state: flowState, actions: flowActions } = useFlow();
+  const { activeFlowId, isLoading, error, joinFlow, createFlow } = useAppStore(
+    useShallow(selector)
+  );
   const [flowCode, setFlowCode] = useState("");
 
   const handleJoinFlow = useCallback(
     async function handleJoinFlow() {
       if (!flowCode) return;
 
-      const success = await appActions.joinFlow(flowCode);
+      const success = await joinFlow(flowCode);
       if (success) {
         setFlowCode("");
       }
     },
-    [flowCode, appActions]
+    [flowCode, joinFlow]
   );
 
   useEffect(() => {
-    if (flowCode.length === 30 && !appState.isLoading && !appState.error) {
+    if (flowCode.length === 30 && !isLoading && !error) {
       handleJoinFlow();
     }
-  }, [flowCode, appState.isLoading, appState.error, handleJoinFlow]);
+  }, [flowCode, isLoading, error, handleJoinFlow]);
 
   // Don't render anything until Jazz is loaded
   // TODO: this does not work because activeFlowId is
@@ -39,10 +48,10 @@ export default function App() {
   //   return null;
   // }
 
-  if (flowState) {
+  if (activeFlowId) {
     return (
       <ReactFlowProvider>
-        <FlowApp flow={flowState} actions={flowActions} />
+        <Flow />
       </ReactFlowProvider>
     );
   }
@@ -53,8 +62,8 @@ export default function App() {
         <Button
           size="lg"
           className="w-full"
-          onClick={appActions.createFlow}
-          disabled={appState.isLoading}
+          onClick={createFlow}
+          disabled={isLoading}
         >
           Create new flow
         </Button>
@@ -63,25 +72,21 @@ export default function App() {
 
         <div className="w-full space-y-2">
           <Input
-            placeholder={
-              appState.isLoading ? "Loading..." : "Join an existing flow"
-            }
+            placeholder={isLoading ? "Loading..." : "Join an existing flow"}
             className="w-full"
             value={flowCode}
             onChange={(e) => {
               setFlowCode(e.target.value.trim());
             }}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !appState.isLoading) {
+              if (e.key === "Enter" && !isLoading) {
                 handleJoinFlow();
               }
             }}
-            aria-invalid={!!appState.error}
-            disabled={appState.isLoading}
+            aria-invalid={!!error}
+            disabled={isLoading}
           />
-          {appState.error && (
-            <p className="text-sm text-destructive">{appState.error}</p>
-          )}
+          {error && <p className="text-sm text-destructive">{error}</p>}
         </div>
       </div>
     </div>
