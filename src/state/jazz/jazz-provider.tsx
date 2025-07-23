@@ -19,7 +19,7 @@ const selector = (state: AppStore) => ({
   setConnections: state.setConnections,
 });
 
-function JazzAppProvider({ children }: { children: ReactNode }) {
+function JazzZustandSync({ children }: { children: ReactNode }) {
   const { setUserId, setJazzFlow, setRoot, setCursors, setConnections } =
     useStore(appStore, useShallow(selector));
 
@@ -90,7 +90,7 @@ export function JazzProvider({ children }: { children: ReactNode }) {
         when: "always",
       }}
     >
-      <JazzAppProvider>{children}</JazzAppProvider>
+      <JazzZustandSync>{children}</JazzZustandSync>
     </JazzReactProvider>
   );
 }
