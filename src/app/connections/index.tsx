@@ -2,11 +2,11 @@ import { useConnection, ViewportPortal } from "@xyflow/react";
 import { useEffect } from "react";
 import { useThrottle } from "@/lib/useThrottle";
 import { ConnectionEdge } from "./ConnectionEdge";
-import { useAppStore } from "@/state/jazz/app-store";
-import { type AppStore } from "@/state/jazz/app-store";
 import { useShallow } from "zustand/shallow";
+import { useAppStore } from "../store-context";
+import type { StoreState } from "../types";
 
-const selector = (state: AppStore) => ({
+const selector = (state: StoreState) => ({
   connections: state.connections,
   updateConnection: state.updateConnection,
 });

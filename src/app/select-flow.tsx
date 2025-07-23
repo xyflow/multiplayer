@@ -1,23 +1,22 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useCallback, useEffect, useState } from "react";
-import { ReactFlowProvider } from "@xyflow/react";
-import { useAppStore, type AppStore } from "./state/jazz/app-store";
+import type { StoreState } from "./types";
 import { useShallow } from "zustand/shallow";
-import { Flow } from "./flow";
+import { useCallback, useEffect, useState } from "react";
+import { useAppStore } from "./store-context";
 
-const selector = (state: AppStore) => ({
-  activeFlowId: state.activeFlowId,
+const selector = (state: StoreState) => ({
+  createFlow: state.createFlow,
+  joinFlow: state.joinFlow,
   isLoading: state.isLoading,
   error: state.error,
-  joinFlow: state.joinFlow,
-  createFlow: state.createFlow,
 });
 
-export default function App() {
-  const { activeFlowId, isLoading, error, joinFlow, createFlow } = useAppStore(
+export function SelectFlow() {
+  const { createFlow, joinFlow, isLoading, error } = useAppStore(
     useShallow(selector)
   );
+
   const [flowCode, setFlowCode] = useState("");
 
   const handleJoinFlow = useCallback(
@@ -37,14 +36,6 @@ export default function App() {
       handleJoinFlow();
     }
   }, [flowCode, isLoading, error, handleJoinFlow]);
-
-  if (activeFlowId) {
-    return (
-      <ReactFlowProvider>
-        <Flow />
-      </ReactFlowProvider>
-    );
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">

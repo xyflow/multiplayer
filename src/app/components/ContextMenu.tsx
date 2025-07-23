@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Square, Type } from "lucide-react";
 import { useReactFlow } from "@xyflow/react";
-import { useAppStore, type AppStore } from "@/state/jazz/app-store";
 import { useShallow } from "zustand/shallow";
+import type { StoreState } from "../types";
+import { useAppStore } from "../store-context";
 
 interface ContextMenuProps {
   visible: boolean;
@@ -11,7 +12,7 @@ interface ContextMenuProps {
   onHide: () => void;
 }
 
-const selector = (state: AppStore) => ({
+const selector = (state: StoreState) => ({
   addNode: state.addNode,
 });
 

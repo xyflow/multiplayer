@@ -1,17 +1,21 @@
+import { useState } from "react";
+import { Share2, X } from "lucide-react";
+import { toast } from "sonner";
+import { useShallow } from "zustand/shallow";
+import { ReactFlow, MiniMap, Controls, Background, Panel } from "@xyflow/react";
+
 import { Button } from "@/components/ui/button";
 
-import { ReactFlow, MiniMap, Controls, Background, Panel } from "@xyflow/react";
-import { Share2, X } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
 import { CheckboxNode } from "./nodes/CheckboxNode";
 import { TextNode } from "./nodes/TextNode";
-import { ContextMenu } from "./ContextMenu";
+
+import { ContextMenu } from "./components/ContextMenu";
 import { Cursors } from "./cursors";
 import { Connections } from "./connections";
-import { useShallow } from "zustand/shallow";
 
-import { useAppStore, type AppStore } from "@/state/jazz/app-store";
+import { useAppStore } from "./store-context";
+
+import type { StoreState } from "./types";
 
 // Register custom node types
 const nodeTypes = {
@@ -19,7 +23,7 @@ const nodeTypes = {
   text: TextNode,
 };
 
-const selector = (state: AppStore) => ({
+const selector = (state: StoreState) => ({
   activeFlowId: state.activeFlowId,
   nodes: state.nodes,
   edges: state.edges,

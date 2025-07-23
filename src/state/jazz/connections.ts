@@ -34,7 +34,7 @@ function deserializeConnection(value: string): Connection {
 }
 
 export interface ConnectionStore {
-  connections: Connection[];
+  connections: ConnectionOfUser[];
   jazzConnections: DeeplyLoadedConnectionContainer | undefined | null;
   setConnections: (
     jazzConnections?: DeeplyLoadedConnectionContainer | null

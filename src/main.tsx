@@ -7,12 +7,13 @@ import { JazzProvider } from "./state/jazz/jazz-provider.tsx";
 import "@xyflow/react/dist/style.css";
 import "./index.css";
 
-import App from "./App.tsx";
+import { App } from "./app";
+import { appStore } from "./state/jazz/app-store.ts";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <JazzProvider>
-      <App />
+      <App store={appStore} />
     </JazzProvider>
     <Toaster />
   </StrictMode>

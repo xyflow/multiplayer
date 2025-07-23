@@ -1,11 +1,12 @@
 import { useOptimistic, useCallback, startTransition } from "react";
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
 import { Input } from "@/components/ui/input";
-import { useAppStore } from "@/state/jazz/app-store";
-import { type AppStore } from "@/state/jazz/app-store";
-import { useShallow } from "zustand/shallow";
 
-const selector = (state: AppStore) => ({
+import { useShallow } from "zustand/shallow";
+import type { StoreState } from "../types";
+import { useAppStore } from "../store-context";
+
+const selector = (state: StoreState) => ({
   updateNodeData: state.updateNodeData,
 });
 

@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import { createStore } from "zustand";
 import {
   JazzEdge,
   JazzNode,
@@ -38,7 +38,7 @@ export interface AppStore extends ConnectionStore, CursorStore, FlowStore {
   exitFlow: () => void;
 }
 
-export const useAppStore = create<AppStore>((set, get, store) => {
+export const appStore = createStore<AppStore>((set, get, store) => {
   const colorMap = new Map<string, string>();
   let colorIndex = 0;
 

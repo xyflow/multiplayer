@@ -7,8 +7,9 @@ import {
   JazzCursorContainer,
   JazzConnectionContainer,
 } from "./schema";
-import { useAppStore, type AppStore } from "./app-store";
+import { appStore, type AppStore } from "./app-store";
 import { useShallow } from "zustand/shallow";
+import { useStore } from "zustand";
 
 const selector = (state: AppStore) => ({
   setUserId: state.setUserId,
@@ -20,9 +21,15 @@ const selector = (state: AppStore) => ({
 
 function JazzAppProvider({ children }: { children: ReactNode }) {
   const { setUserId, setJazzFlow, setRoot, setCursors, setConnections } =
-    useAppStore(useShallow(selector));
+    useStore(appStore, useShallow(selector));
 
   const { me } = useAccount();
+
+  useLayoutEffect(() => {
+    if (me) {
+      setUserId(me.id);
+    }
+  }, [me, setUserId]);
 
   const root = useCoState(JazzRoot, me?.root?.id, {
     resolve: {
@@ -54,12 +61,6 @@ function JazzAppProvider({ children }: { children: ReactNode }) {
       },
     }
   );
-
-  useLayoutEffect(() => {
-    if (me) {
-      setUserId(me.id);
-    }
-  }, [me, setUserId]);
 
   useLayoutEffect(() => {
     setRoot(root);

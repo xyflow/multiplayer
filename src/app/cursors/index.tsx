@@ -9,10 +9,10 @@ import {
 
 import { useThrottle } from "@/lib/useThrottle";
 import { Cursor } from "./Cursor";
-import { useAppStore } from "@/state/jazz/app-store";
-import { type AppStore } from "@/state/jazz/app-store";
+import type { StoreState } from "../types";
+import { useAppStore } from "../store-context";
 
-const selector = (state: AppStore) => ({
+const selector = (state: StoreState) => ({
   cursors: state.cursors,
   updateCursor: state.updateCursor,
 });
