@@ -7,10 +7,11 @@ import { toast } from "sonner";
 import { CheckboxNode } from "./nodes/CheckboxNode";
 import { TextNode } from "./nodes/TextNode";
 import { ContextMenu } from "./ContextMenu";
-import { useAppStore, type AppStore } from "@/state/jazz/app-store";
 import { Cursors } from "./cursors";
 import { Connections } from "./connections";
 import { useShallow } from "zustand/shallow";
+
+import { useAppStore, type AppStore } from "@/state/jazz/app-store";
 
 // Register custom node types
 const nodeTypes = {
@@ -19,13 +20,13 @@ const nodeTypes = {
 };
 
 const selector = (state: AppStore) => ({
-  exitFlow: state.exitFlow,
+  activeFlowId: state.activeFlowId,
   nodes: state.nodes,
   edges: state.edges,
+  exitFlow: state.exitFlow,
   onNodesChange: state.onNodesChange,
   onEdgesChange: state.onEdgesChange,
   onConnect: state.onConnect,
-  activeFlowId: state.activeFlowId,
 });
 
 export function Flow() {

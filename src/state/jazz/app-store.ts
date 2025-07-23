@@ -13,12 +13,12 @@ import { createCursorSlice, type CursorStore } from "./cursors";
 import { createFlowSlice, type FlowStore } from "./flow";
 
 const ALL_COLORS = [
-  "#D14D41",
   "#DA702C",
   "#D0A215",
   "#879A39",
   "#3AA99F",
   "#4385BE",
+  "#D14D41",
   "#8B7EC8",
   "#CE5D97",
 ];
