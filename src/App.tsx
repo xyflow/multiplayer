@@ -38,16 +38,6 @@ export default function App() {
     }
   }, [flowCode, isLoading, error, handleJoinFlow]);
 
-  // Don't render anything until Jazz is loaded
-  // TODO: this does not work because activeFlowId is
-  // if (
-  //   appState.activeFlowId === undefined ||
-  //   flowState === undefined ||
-  //   !appState.userId
-  // ) {
-  //   return null;
-  // }
-
   if (activeFlowId) {
     return (
       <ReactFlowProvider>

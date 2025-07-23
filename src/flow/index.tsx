@@ -31,16 +31,16 @@ const selector = (state: AppStore) => ({
 
 export function Flow() {
   const {
-    exitFlow,
     nodes,
     edges,
+    activeFlowId,
+    exitFlow,
     onNodesChange,
     onEdgesChange,
     onConnect,
-    activeFlowId,
   } = useAppStore(useShallow(selector));
 
-  const [fitView] = useState(nodes.length > 0);
+  const [fitView] = useState(() => nodes.length > 0);
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
@@ -58,20 +58,17 @@ export function Flow() {
       nodeTypes={nodeTypes}
       onPointerDown={(e) => {
         // Right mouse button is button 2
-        if (e.button === 2) {
-          e.preventDefault();
-          setContextMenu({
-            x: e.clientX - 150,
-            y: e.clientY - 50,
-            visible: true,
-          });
-        } else {
-          // Hide context menu on any other click
+        if (e.button !== 2) {
           hideContextMenu();
         }
       }}
-      onContextMenu={(e) => {
+      onPaneContextMenu={(e) => {
         e.preventDefault(); // Prevent default context menu
+        setContextMenu({
+          x: e.clientX - 150,
+          y: e.clientY - 50,
+          visible: true,
+        });
       }}
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
@@ -79,6 +76,10 @@ export function Flow() {
       fitView={fitView}
       minZoom={0}
     >
+      <MiniMap />
+      <Controls />
+      <Background />
+
       <Panel className="flex gap-2" position="top-left">
         <Button
           variant="outline"
@@ -117,9 +118,6 @@ export function Flow() {
         onHide={hideContextMenu}
       />
 
-      <MiniMap />
-      <Controls />
-      <Background />
       <Cursors />
       <Connections />
     </ReactFlow>
